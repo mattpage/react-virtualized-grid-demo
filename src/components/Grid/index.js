@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { AutoSizer, MultiGrid } from 'react-virtualized';
 import styled from 'styled-components';
 import classnames from 'classnames';
+import Draggable from 'react-draggable';
 
 const gridHeaderColor = '#e0e0e0';
 const gridBorderColor = '#cbcbcb';
@@ -22,6 +23,16 @@ export const GridContainer = styled.div`
     white-space: nowrap;
   }
 
+  .column {
+    position: relative;
+
+    .column-resizer {
+      position: absolute;
+      right: 0;
+      color: ${gridBorderColor};
+      cursor: col-resize;
+    }
+  }
   .cell {
     border-bottom: solid 1px ${gridBorderColor};
   }
@@ -46,6 +57,22 @@ export const GridContainer = styled.div`
 
 class Grid extends Component {
 
+  static createColumnResizer() {
+    const props = {
+      axis: 'x',
+      handle: 'column-resizer',
+      position: { x: 0, y: 0 },
+      zIndex: 9999,
+    };
+    return (
+      <Draggable {...props}>
+        <span className="column-resizer">
+|
+        </span>
+      </Draggable>
+    );
+  }
+
   static createCellRenderer(columns, rows, features, gridWidth) {
     return ({ columnIndex, key, rowIndex, style }) => {
       if (rowIndex < 1){
@@ -58,6 +85,7 @@ class Grid extends Component {
             style={style}
           >
             {column}
+            { features.enableColumnResizing && Grid.createColumnResizer() }
           </div>
         );
       }
@@ -93,6 +121,7 @@ class Grid extends Component {
 
   static propTypes = {
     columns: PropTypes.array,
+    enableColumnResizing: PropTypes.bool,
     enableFixedHeader: PropTypes.bool,
     enableRowStriping: PropTypes.bool,
     rows: PropTypes.array,
@@ -102,6 +131,7 @@ class Grid extends Component {
 
   static defaultProps = {
     columns: [],
+    enableColumnResizing: true,
     enableFixedHeader: false,
     enableRowStriping: false,
     rows: [],
@@ -110,7 +140,7 @@ class Grid extends Component {
   };
 
   render() {
-    const { columns, enableFixedHeader, enableRowStriping, height, rows, width } = this.props;
+    const { columns, enableColumnResizing, enableFixedHeader, enableRowStriping, height, rows, width } = this.props;
     const columnCount = columns.length;
 
     return (
@@ -126,7 +156,7 @@ class Grid extends Component {
                   classNameTopRightGrid="grid-header"
                   classNameBottomLeftGrid="gridbl"
                   classNameBottomRightGrid="grid-body"
-                  cellRenderer={Grid.createCellRenderer(columns, rows, { enableRowStriping }, w)}
+                  cellRenderer={Grid.createCellRenderer(columns, rows, { enableColumnResizing, enableRowStriping }, w)}
                   columnCount={columnCount}
                   columnWidth={(col) => ('width' in columns[col.index] ? columns[col.index].width : 100)}
                   enableFixedRowScroll
